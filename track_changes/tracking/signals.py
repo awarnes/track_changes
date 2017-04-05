@@ -6,6 +6,7 @@ from datetime import datetime as dt
 
 # Track Changes:
 from django.contrib.admin.models import LogEntry
+from django.forms.models import model_to_dict
 from .models import TrackChange
 
 # Signal Imports:
@@ -38,17 +39,17 @@ from django.dispatch import receiver
 
 
 @receiver(post_save)
-def track_create(sender, instance, **kwargs):
+def track_create_and_update(sender, instance, **kwargs):
 
-    # if kwargs.get('created', False):
     if not isinstance(instance, TrackChange) and not isinstance(instance, LogEntry):
 
         TrackChange.objects.create(
             operation='CR' if kwargs.get('created') else 'UP',
-            changed_fields=str(kwargs['update_fields']),
-            changed_data=instance._meta.get_fields(),
+            changed_fields=str(kwargs['update_fields']), # Still need way to get updated fields.
+            changed_data={field.attname: getattr(instance, str(field.name)) for field in instance._meta.get_fields()\
+                          if field.attname not in ('id')},
             changed_pk=instance.pk,
-            changed_class=instance._meta,
+            changed_class=sender.__name__,
         )
 
 @receiver(pre_delete)
@@ -62,5 +63,5 @@ def track_delete(sender, instance, using, **kwargs):
             changed_fields='None',
             changed_data='None',
             changed_pk=instance.pk,
-            changed_class=instance._meta,
+            changed_class=sender.__name__,
         )

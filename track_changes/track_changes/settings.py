@@ -109,7 +109,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC' # TODO: localizable to client area.
+TIME_ZONE = 'America/Los_Angeles' # TODO: localizable to client area.
 
 USE_I18N = True
 
