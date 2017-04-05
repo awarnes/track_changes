@@ -19,3 +19,6 @@ class TrackChange(models.Model):
     changed_pk = models.BigIntegerField()
     changed_class = models.CharField(max_length=128)
     time_changed = models.DateTimeField(default=timezone.now)
+
+    def __str__(self):
+        return self.operation

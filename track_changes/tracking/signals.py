@@ -22,33 +22,45 @@ from django.dispatch import receiver
 #     changed_fields = {field.name: getattr(new_model_instance, field.name) for field in new_model_instance._meta.get_fields() if getattr(new_model_instance, field) != getattr(prev_model_instance, field)}
 #
 # @receiver(pre_save)
-# def track_pre_save(sender, instance, **kwargs):
+# def track_updated(sender, instance, **kwargs):
 #     """Tracks the save signals for models in or out of the Django Admin."""
+#
+#     # instance
 #
 #     if not isinstance(instance, TrackChange) and not isinstance(instance, LogEntry):
 #         tracked_change = TrackChange.objects.create(
-#             operation='CR',
-#             changed_fields=kwargs['update_fields'] or 'None',
+#             operation='UP',
+#             changed_fields=kwargs.get('update_fields') or 'None',
 #             changed_data='42',
 #             changed_pk=instance.pk or 0,
-#             changed_class=sender.__name__,
+#             changed_class=sender.__dict__,
 #         )
-#
-#         if tracked_change.changed_fields == 'None':
-#             tracked_change.changed_fields = instance.objects.
-#
 
 
-@receiver(pre_init, sender='organizations.Organization')
-def track_create(sender, **kwargs):
+@receiver(post_save)
+def track_create(sender, instance, **kwargs):
 
-    if not isinstance(sender, TrackChange) and not isinstance(sender, LogEntry):
+    # if kwargs.get('created', False):
+    if not isinstance(instance, TrackChange) and not isinstance(instance, LogEntry):
 
         TrackChange.objects.create(
-            operation='CR',
-            changed_fields=list(kwargs.keys()),
-            changed_data=dict(kwargs.items()),
-            changed_pk=0,
-            changed_class=sender.__name__,
+            operation='CR' if kwargs.get('created') else 'UP',
+            changed_fields=str(kwargs['update_fields']),
+            changed_data=instance._meta.get_fields(),
+            changed_pk=instance.pk,
+            changed_class=instance._meta,
+        )
 
+@receiver(pre_delete)
+def track_delete(sender, instance, using, **kwargs):
+    """To track any deleted object, except for tracking objects themselves and LogEntries."""
+
+    if not isinstance(instance, TrackChange) and not isinstance(instance, LogEntry):
+
+        TrackChange.objects.create(
+            operation='DE',
+            changed_fields='None',
+            changed_data='None',
+            changed_pk=instance.pk,
+            changed_class=instance._meta,
         )
