@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 
 
 class TrackChange(models.Model):
@@ -17,4 +18,4 @@ class TrackChange(models.Model):
     changed_data = models.CharField(max_length=1024)
     changed_pk = models.BigIntegerField()
     changed_class = models.CharField(max_length=128)
-    time_changed = models.DateTimeField(auto_now_add=False)
+    time_changed = models.DateTimeField(default=timezone.now)
