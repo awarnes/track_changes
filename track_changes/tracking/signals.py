@@ -2,7 +2,7 @@
 Signal for updating the TrackChange model from all information on other possible models.
 """
 # Python Imports:
-from datetime import datetime as dt
+import json
 
 # Track Changes:
 from django.contrib.admin.models import LogEntry
@@ -15,6 +15,7 @@ from django.core.signals import (request_started, request_finished, got_request_
 
 # Django Imports:
 from django.dispatch import receiver
+from django.db.models import Q
 
 
 # def check_for_changed_fields(prev_model_instance, new_model_instance):
@@ -43,12 +44,22 @@ def track_create_and_update(sender, instance, **kwargs):
 
     if not isinstance(instance, TrackChange) and not isinstance(instance, LogEntry):
 
+        if not kwargs.get('created'):
+            previous_state = TrackChange.objects.filter(Q(changed_pk=instance.pk), Q(changed_class=sender.__name__)).latest(field_name='time_changed')
+
+            changed_fields = [field.name for field in instance._meta.get_fields()
+                              if json.loads(previous_state.changed_data).get(str(field.name)) != getattr(instance, str(field.name))
+                              and field.name not in ('id')]
+
         TrackChange.objects.create(
             operation='CR' if kwargs.get('created') else 'UP',
-            changed_fields=str(kwargs['update_fields']), # Still need way to get updated fields.
-            changed_data={field.attname: getattr(instance, str(field.name)) for field in instance._meta.get_fields()\
-                          if field.attname not in ('id')},
+
+            changed_fields=changed_fields,
+
+            changed_data=json.dumps({"{}".format(field.attname): getattr(instance, str(field.name)) for field in instance._meta.get_fields()\
+                          if field.attname not in ('id') and getattr(instance, str(field.name)) != ''}),
             changed_pk=instance.pk,
+
             changed_class=sender.__name__,
         )
 
