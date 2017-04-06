@@ -16,6 +16,21 @@ Including another URLconf
 from django.conf.urls import url
 from django.contrib import admin
 
+# Imports for DRF:
+from rest_framework import routers
+from django.conf.urls import include
+
+from tracking.views import TrackChangeViewSet
+
+
+# DRF Configuration:
+router = routers.DefaultRouter()
+router.register(r'tracked_changes', TrackChangeViewSet)
+
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
+
+
+    url(r'^api/v1/', include(router.urls)),
+    url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
 ]

@@ -7,7 +7,7 @@ change record that is then saved separately into the database.
 
 Without a sender model being designated in the receiver decorator it will be attached to every model in the database.
 If change tracking is only needed for certain models, the sender can be designated as such:
-    
+
     @receiver(post_save, sender=TestUser)
                 or
     senders = (TestUser, Organization)
