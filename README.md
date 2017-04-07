@@ -13,13 +13,13 @@ The tracking app in the project is where the functions triggered by the signals 
 
 #### Tracking methods:
 
-* The track_create_and_update method:
+The track_create_and_update method:
  * makes sure that it is not tracking a TrackChange instance or an instance of a LogEntry,
  * creates a new TrackChange instance with pertinent data about which instance is being saved,
  * what changes have been made to it, if any,
  * and gives the tracking instance a time-stamp for the change.
 
-* The track_delete method tracks:
+The track_delete method tracks:
  * whether a model has been deleted,
  * which model it is,
  * the instance primary key,
