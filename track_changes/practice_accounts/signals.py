@@ -16,11 +16,3 @@ from django.contrib.auth.models import User
 def associate_auth_token(sender, instance=None, created=False, **kwargs):
     if created:
         Token.objects.create(user=instance)
-
-
-# Ensure that all current accounts have AuthTokens:
-
-for user in User.objects.all():
-
-    if user != Token.objects.filter(user=user)[0]:
-        Token.objects.get_or_create(user=user)

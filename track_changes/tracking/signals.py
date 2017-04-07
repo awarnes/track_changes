@@ -13,8 +13,10 @@ If change tracking is only needed for certain models, the sender can be designat
     senders = (TestUser, Organization)
     @receiver(post_save. sender=senders
 """
+
 # Python Imports:
 import json
+from datetime import datetime
 
 # Track Changes:
 from .models import TrackChange
@@ -32,6 +34,13 @@ from django.contrib.admin.models import LogEntry
 # Specify which models need to be tracked, and add sender=senders to each receiver if not tracking the whole database.
 # senders = (TestUser,)
 
+def json_datetime_serializer(object):
+    """JSON serializer for datetime objects. Will raise error if passed object it cannot serialize."""
+
+    if isinstance(object, datetime):
+        serial = object.isoformat()
+        return serial
+    raise TypeError ("{} is not JSON serializable.".format(object))
 
 # Do not specify sender in order to automatically receive the signal for every model in the project.
 @receiver(post_save,)
@@ -43,18 +52,25 @@ def track_create_and_update(sender, instance, **kwargs):
         # Create a new instance to store the tracked changes:
         tracked_change = TrackChange.objects.create(
             operation='CR' if kwargs.get('created') else 'UP',
-
-            changed_data=json.dumps({"{}".format(field.attname): getattr(instance, str(field.name)) for field in instance._meta.get_fields()\
-                          if field.attname not in ('id',) and getattr(instance, str(field.name)) != ''}),
-
             changed_pk=instance.pk,
             changed_class=sender.__name__,
         )
 
+        # The data for the current state of the instance:
+        tracked_change.changed_data = json.dumps({"{}".format(field.name):
+                                                (getattr(instance, str(field.name)) if not field.is_relation
+                                                else {field.related_model.__name__: getattr(field.target_field.model, str(field.target_field.name))}) # TODO: Issue with m2m, o2o, and fk fields trying to get pk for through model.
+                                                for field in instance._meta.get_fields() if field.name not in ('id',)
+                                                and (getattr(instance, str(field.attname)) if not field.is_relation else None) != ''},
+                                            default=json_datetime_serializer)
+
+        tracked_change.save()
+
         # Use previous state data to determine which fields have changed between the two instances.
         if not kwargs.get('created'):
-            previous_state = TrackChange.objects.filter(Q(changed_pk=instance.pk), Q(changed_class=sender.__name__))\
-                                                .order_by('-time_changed')[1]
+            previous_state = TrackChange.objects.filter(Q(changed_pk=instance.pk), Q(changed_class=sender.__name__))
+
+            previous_state = previous_state.order_by('-time_changed')[1 if len(previous_state) > 1 else 0]
 
             # import pdb; pdb.set_trace()
             changed_fields = [field_name for field_name, field_value in json.loads(tracked_change.changed_data).items()

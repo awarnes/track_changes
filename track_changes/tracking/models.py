@@ -16,7 +16,7 @@ class TrackChange(models.Model):
     operation = models.CharField(max_length=2, choices=OPERATIONS)
     changed_fields = models.CharField(max_length=1024)
     changed_data = models.CharField(max_length=1024)
-    changed_pk = models.BigIntegerField()
+    changed_pk = models.CharField(max_length=1024)
     changed_class = models.CharField(max_length=128)
     time_changed = models.DateTimeField(default=timezone.now)
 

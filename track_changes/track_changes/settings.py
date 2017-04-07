@@ -128,7 +128,11 @@ STATIC_URL = '/static/'
 
 # DRF Configuration:
 REST_FRAMEWORK = {
+    'DEFAULT_PERMISSIONS_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    ),
+
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework.authentication.TokenAuthentication'
-    )
+        'rest_framework.authentication.TokenAuthentication',
+    ),
 }
